@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import api from "../../services/api";
 
-const AddProduct = () => {
+const ProductDetailsForm = () => {
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
   const [filteredSubcategories, setFilteredSubcategories] = useState([]);
@@ -15,8 +16,8 @@ const AddProduct = () => {
     tags: "",
   });
 
-  const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   // Fetch categories
   useEffect(() => {
@@ -64,11 +65,6 @@ const AddProduct = () => {
     setProduct({ ...product, [name]: value });
   };
 
-  // Handle image file selection
-  const handleFileChange = (e) => {
-    setImages([...e.target.files]);
-  };
-
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -78,27 +74,16 @@ const AddProduct = () => {
     for (const key in product) {
       formData.append(key, product[key]);
     }
-    images.forEach((image) => {
-      formData.append("images", image);
-    });
 
     try {
-      await api.post("/product/products/", formData, {
+      const { data } = await api.post("/product/products/", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      toast.success("Product added successfully!");
-      setProduct({
-        name: "",
-        description: "",
-        base_price: "",
-        category_id: "",
-        subcategory_id: "",
-        tags: "",
-      });
-      setImages([]);
+      toast.success("Product details added successfully!");
+      navigate(`/dashboard/upload-images/${data.id}`);
     } catch (error) {
-      console.error("Failed to add product:", error);
-      toast.error("Failed to add product.");
+      console.error("Failed to add product details:", error);
+      toast.error("Failed to add product details.");
     } finally {
       setLoading(false);
     }
@@ -106,7 +91,7 @@ const AddProduct = () => {
 
   return (
     <div className="bg-white shadow-lg rounded-lg p-6">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Add Product</h2>
+      <h2 className="text-2xl font-bold text-gray-800 mb-6">Add Product Details</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700">Product Name</label>
@@ -187,16 +172,6 @@ const AddProduct = () => {
             className="mt-1 px-4 py-2 w-full border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:outline-none"
           />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Product Images</label>
-          <input
-            type="file"
-            multiple
-            onChange={handleFileChange}
-            accept="image/*"
-            className="mt-1"
-          />
-        </div>
         <button
           type="submit"
           disabled={loading}
@@ -204,11 +179,11 @@ const AddProduct = () => {
             loading ? "bg-gray-400" : "bg-purple-600 hover:bg-purple-700"
           } focus:ring-2 focus:ring-purple-500 focus:outline-none`}
         >
-          {loading ? "Adding..." : "Add Product"}
+          {loading ? "Next..." : "Next"}
         </button>
       </form>
     </div>
   );
 };
 
-export default AddProduct;
+export default ProductDetailsForm;
