@@ -1,7 +1,7 @@
 from django.db import models
 from users.models import *
 # Create your models here.
-
+# Abishek Test
 
 class Category(models.Model):
     name = models.CharField(max_length=255, unique=True)
