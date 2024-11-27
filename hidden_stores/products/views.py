@@ -141,3 +141,111 @@ class ProductVariantImageUploadView(APIView):
     
 # Till here NIhal Changed
 # =========================================================================================================
+
+
+class ProductVariantViewSet(viewsets.ModelViewSet):
+    queryset = ProductVariant.objects.prefetch_related('attribute_values').all()
+    serializer_class = ProductVariantSerializer
+
+class ProductVariantImageViewSet(viewsets.ModelViewSet):
+    queryset = ProductVariantImage.objects.all()
+    serializer_class = ProductVariantImageSerializer
+
+
+
+########################################################################################################################################
+
+from django.shortcuts import get_object_or_404
+
+
+class AttributeListCreateView(APIView):
+    """
+    Handles listing all attributes for a product and creating a new attribute.
+    """
+    def get(self, request, *args, **kwargs):
+        product_id = kwargs.get('product_id')
+        attributes = ProductAttribute.objects.filter(product_id=product_id)
+        serializer = AttributeSerializer(attributes, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, *args, **kwargs):
+        product_id = kwargs.get('product_id')
+        data = request.data
+        data['product'] = product_id
+        serializer = AttributeSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class AttributeDetailView(APIView):
+    """
+    Handles retrieving, updating, and deleting a specific attribute.
+    """
+    def get(self, request, *args, **kwargs):
+        attribute = get_object_or_404(ProductAttribute, pk=kwargs.get('attribute_id'))
+        serializer = AttributeSerializer(attribute)
+        return Response(serializer.data)
+
+    def put(self, request, *args, **kwargs):
+        attribute = get_object_or_404(ProductAttribute, pk=kwargs.get('attribute_id'))
+        serializer = AttributeSerializer(attribute, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, *args, **kwargs):
+        attribute = get_object_or_404(ProductAttribute, pk=kwargs.get('attribute_id'))
+        attribute.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class AttributeValueListCreateView(APIView):
+    """
+    Handles listing all values for an attribute and creating a new attribute value.
+    """
+    def get(self, request, *args, **kwargs):
+        attribute_id = kwargs.get('attribute_id')
+        values = ProductAttributeValue.objects.filter(attribute_id=attribute_id)
+        serializer = AttributeValueSerializer(values, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, *args, **kwargs):
+        attribute_id = kwargs.get('attribute_id')
+        data = request.data
+        data['attribute'] = attribute_id
+        serializer = AttributeValueSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AttributeValueDetailView(APIView):
+    """
+    Handles retrieving, updating, and deleting a specific attribute value.
+    """
+    def get(self, request, *args, **kwargs):
+        value = get_object_or_404(ProductAttributeValue, pk=kwargs.get('value_id'))
+        serializer = AttributeValueSerializer(value)
+        return Response(serializer.data)
+
+    def put(self, request, *args, **kwargs):
+        value = get_object_or_404(ProductAttributeValue, pk=kwargs.get('value_id'))
+        serializer = AttributeValueSerializer(value, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, *args, **kwargs):
+        value = get_object_or_404(ProductAttributeValue, pk=kwargs.get('value_id'))
+        value.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+
+
+
+

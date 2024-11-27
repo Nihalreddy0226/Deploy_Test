@@ -56,6 +56,27 @@ attribute_value_detail = ProductAttributeValueViewSet.as_view({
     'delete': 'destroy'
 })
 
+product_variant_list = ProductVariantViewSet.as_view({
+    'get': 'list',
+    'post': 'create'
+})
+product_variant_detail = ProductVariantViewSet.as_view({
+    'get': 'retrieve',
+    'put': 'update',
+    'patch': 'partial_update',
+    'delete': 'destroy'
+})
+
+product_variant_image_list = ProductVariantImageViewSet.as_view({
+    'get': 'list',
+    'post': 'create'
+})
+product_variant_image_detail = ProductVariantImageViewSet.as_view({
+    'get': 'retrieve',
+    'put': 'update',
+    'patch': 'partial_update',
+    'delete': 'destroy'
+})
 
 urlpatterns = [
     
@@ -72,4 +93,20 @@ urlpatterns = [
     path('attribute-values/<int:pk>/', attribute_value_detail, name='attribute-value-detail'),
     path('subcategories/', subcategory_list, name='subcategory-list'),
     path('subcategories/<int:pk>/', subcategory_detail, name='subcategory-detail'),
+    path('product-variants/', product_variant_list, name='product-variant-list'),
+    path('product-variants/<int:pk>/', product_variant_detail, name='product-variant-detail'),
+
+    # Product Variant Image URLs
+    path('product-variant-images/', product_variant_image_list, name='product-variant-image-list'),
+    path('product-variant-images/<int:pk>/', product_variant_image_detail, name='product-variant-image-detail'),
+
+
+
+    # Attribute URLs
+    path('products/<int:product_id>/attributes2/', AttributeListCreateView.as_view(), name='attribute-list-create'),
+    path('attributes/<int:attribute_id>/', AttributeDetailView.as_view(), name='attribute-detail'),
+
+    # Attribute Value URLs
+    path('attributes/<int:attribute_id>/values/', AttributeValueListCreateView.as_view(), name='attribute-value-list-create'),
+    path('values/<int:value_id>/', AttributeValueDetailView.as_view(), name='attribute-value-detail'),
 ]

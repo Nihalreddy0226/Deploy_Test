@@ -31,6 +31,8 @@ class ProductAttributeSerializer(serializers.ModelSerializer):
         model = ProductAttribute
         fields = ['id', 'product', 'name', 'values']
 
+
+
 class ProductVariantImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductVariantImage
@@ -179,3 +181,35 @@ class ProductVariantImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductVariantImage
         fields = ['id', 'variant', 'image', 'alt_text', 'created_at']
+
+
+
+class ProductVariantSerializer(serializers.ModelSerializer):
+    attribute_values = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=ProductAttributeValue.objects.all()
+    )
+
+    class Meta:
+        model = ProductVariant
+        fields = ['id', 'product', 'attribute_values', 'price', 'stock', 'is_active', 'created_at', 'updated_at']
+
+#############################################################################################################################################################
+
+from rest_framework import serializers
+
+class AttributeSerializer(serializers.ModelSerializer):
+    product_id = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all(), source='product')
+
+    class Meta:
+        model = ProductAttribute
+        fields = ['id', 'name', 'product_id']
+        read_only_fields = ['id']
+
+class AttributeValueSerializer(serializers.ModelSerializer):
+    attribute_id = serializers.PrimaryKeyRelatedField(queryset=ProductAttribute.objects.all(), source='attribute')
+
+    class Meta:
+        model = ProductAttributeValue
+        fields = ['id', 'value', 'attribute_id']
+        read_only_fields = ['id']
