@@ -245,6 +245,63 @@ class AttributeValueDetailView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class ProductVariantListCreateView(APIView):
+    """
+    Handles listing and creating product variants.
+    """
+    def get(self, request, *args, **kwargs):
+        product_id = kwargs.get('product_id')
+        variants = ProductVariant.objects.filter(product_id=product_id)
+        serializer = ProductVariantSerializer(variants, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, *args, **kwargs):
+        serializer = ProductVariantSerializer(data=request.data)
+        if serializer.is_valid():
+            variant = serializer.save()
+            return Response(ProductVariantSerializer(variant).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+class ProductVariantDetailView(APIView):
+    """
+    Handles retrieving, updating, and deleting a specific product variant.
+    """
+    def get(self, request, *args, **kwargs):
+        variant = get_object_or_404(ProductVariant, pk=kwargs.get('variant_id'))
+        serializer = ProductVariantSerializer(variant)
+        return Response(serializer.data)
+
+    def put(self, request, *args, **kwargs):
+        variant = get_object_or_404(ProductVariant, pk=kwargs.get('variant_id'))
+        serializer = ProductVariantSerializer(variant, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, *args, **kwargs):
+        variant = get_object_or_404(ProductVariant, pk=kwargs.get('variant_id'))
+        variant.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ProductVariantImageListCreateView(APIView):
+    def get(self, request, *args, **kwargs):
+        variant_id = kwargs.get('variant_id')
+        images = ProductVariantImage.objects.filter(variant_id=variant_id)
+        serializer = ProductVariantImageSerializer(images, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, *args, **kwargs):
+        serializer = ProductVariantImageSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 
 

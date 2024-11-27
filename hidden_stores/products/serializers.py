@@ -213,3 +213,69 @@ class AttributeValueSerializer(serializers.ModelSerializer):
         model = ProductAttributeValue
         fields = ['id', 'value', 'attribute_id']
         read_only_fields = ['id']
+
+
+class ProductVariantSerializer(serializers.ModelSerializer):
+    attributes = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=ProductAttributeValue.objects.all(),
+        help_text="List of attribute values for this variant"
+    )
+    product_id = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all(), source='product')
+
+    class Meta:
+        model = ProductVariant
+        fields = ['id', 'product_id', 'sku', 'stock', 'price', 'attributes']
+        read_only_fields = ['id']
+
+    def validate(self, data):
+        product = data['product']
+        attributes = data['attributes']
+
+        # Step 1: Ensure all attributes belong to the same product
+        for attribute_value in attributes:
+            if attribute_value.attribute.product != product:
+                raise serializers.ValidationError(
+                    f"Attribute value '{attribute_value.value}' does not belong to the specified product."
+                )
+
+        # Step 2: Ensure attributes represent unique product attributes
+        unique_attributes = set()
+        for attribute_value in attributes:
+            if attribute_value.attribute.id in unique_attributes:
+                raise serializers.ValidationError(
+                    f"Duplicate attribute detected: '{attribute_value.attribute.name}'."
+                )
+            unique_attributes.add(attribute_value.attribute.id)
+
+        return data
+
+    def create(self, validated_data):
+        attributes = validated_data.pop('attributes')
+        product = validated_data['product']
+
+        # Check if an exact variant with these attributes exists
+        existing_variants = ProductVariant.objects.filter(product=product)
+        for variant in existing_variants:
+            # Check if the attributes match exactly
+            variant_attributes = set(variant.attributes.all())
+            if variant_attributes == set(attributes):
+                # If an exact match is found, update the stock
+                variant.stock += validated_data.get('stock', 0)
+                variant.save()
+                return variant
+
+        # If no exact match is found, create a new variant
+        variant = ProductVariant.objects.create(**validated_data)
+        variant.attributes.set(attributes)
+        return variant
+
+
+class ProductVariantImageSerializer(serializers.ModelSerializer):
+    variant_id = serializers.PrimaryKeyRelatedField(queryset=ProductVariant.objects.all(), source='variant')
+
+    class Meta:
+        model = ProductVariantImage
+        fields = ['id', 'variant_id', 'image', 'alt_text', 'created_at']
+        read_only_fields = ['id', 'created_at']
+

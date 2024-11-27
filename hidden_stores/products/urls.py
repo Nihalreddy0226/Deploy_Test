@@ -109,4 +109,11 @@ urlpatterns = [
     # Attribute Value URLs
     path('attributes/<int:attribute_id>/values/', AttributeValueListCreateView.as_view(), name='attribute-value-list-create'),
     path('values/<int:value_id>/', AttributeValueDetailView.as_view(), name='attribute-value-detail'),
+
+    # Product Variant URLs
+    path('products/<int:product_id>/variants/', ProductVariantListCreateView.as_view(), name='variant-list-create'),
+    path('variants/<int:variant_id>/', ProductVariantDetailView.as_view(), name='variant-detail'),
+
+    # Product Variant Image URLs
+    path('variants/<int:variant_id>/images/', ProductVariantImageListCreateView.as_view(), name='variant-image-list-create'),
 ]
