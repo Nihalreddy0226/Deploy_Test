@@ -4,7 +4,7 @@ import { toast } from "react-toastify";
 import api from "../../services/api";
 
 const AddVariants = () => {
-  const { productId } = useParams(); // Get product ID from URL params
+  const { productId } = useParams();
   const navigate = useNavigate();
   const [variants, setVariants] = useState([]);
   const [attributes, setAttributes] = useState([]);
@@ -25,9 +25,9 @@ const AddVariants = () => {
               const valuesResponse = await api.get(
                 `/product/attributes/${attribute.id}/values/`
               );
-              return { ...attribute, values: valuesResponse.data };
+              return { ...attribute, values: valuesResponse.data || [] };
             } catch {
-              return { ...attribute, values: [] }; // Handle case when fetching values fails
+              return { ...attribute, values: [] };
             }
           })
         );
@@ -40,8 +40,8 @@ const AddVariants = () => {
 
     const fetchVariants = async () => {
       try {
-        const { data } = await api.get(`/product/products/${productId}/variants/`);
-        setVariants(data);
+        const { data } = await api.get(`/product/variants/list/${productId}/`);
+        setVariants(data || []);
       } catch (error) {
         console.error("Failed to fetch variants:", error);
         toast.error("Failed to load variants.");
@@ -66,7 +66,7 @@ const AddVariants = () => {
         sku,
         stock,
         price,
-        attributes: Object.values(selectedAttributes), // Pass selected attribute values
+        attributes: Object.values(selectedAttributes),
       };
 
       const { data } = await api.post(`/product/products/${productId}/variants/`, payload);
@@ -150,7 +150,7 @@ const AddVariants = () => {
                   className="mt-1 px-4 py-2 w-full border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:outline-none"
                 >
                   <option value="">Select {attribute.name}</option>
-                  {attribute.values && attribute.values.length > 0 ? (
+                  {attribute.values.length > 0 ? (
                     attribute.values.map((value) => (
                       <option key={value.id} value={value.id}>
                         {value.value}
@@ -191,8 +191,17 @@ const AddVariants = () => {
                     <p className="text-sm text-gray-700">Stock: {variant.stock}</p>
                     <p className="text-sm text-gray-700">
                       Attributes:{" "}
-                      {variant.attributes &&
-                        variant.attributes.map((attr) => `${attr.attribute.name}: ${attr.value}`).join(", ")}
+                      {variant.attributes.map((attrId) => {
+                        const matchingAttribute = attributes.find((attribute) =>
+                          attribute.values.some((value) => value.id === attrId)
+                        );
+                        const matchingValue = matchingAttribute?.values.find(
+                          (value) => value.id === attrId
+                        );
+                        return matchingAttribute
+                          ? `${matchingAttribute.name}: ${matchingValue?.value || "N/A"}`
+                          : "N/A";
+                      }).join(", ")}
                     </p>
                   </div>
                   <button
