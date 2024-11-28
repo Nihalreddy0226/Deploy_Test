@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import api from "../services/api";
 
@@ -7,6 +7,7 @@ const ImageUploadSection = () => {
   const { productId } = useParams();
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleFileChange = (e) => {
     setImages([...e.target.files]);
@@ -29,6 +30,7 @@ const ImageUploadSection = () => {
         headers: { "Content-Type": "multipart/form-data" },
       });
       toast.success("Images uploaded successfully!");
+      navigate('/dashboard/products')
     } catch (error) {
       console.error("Failed to upload images:", error);
       toast.error("Failed to upload images.");

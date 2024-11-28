@@ -104,12 +104,18 @@ const Products = () => {
                 {subcategories[product.subcategory_id] || "N/A"}
               </td>
               <td className="border-b p-4">${product.base_price}</td>
-              <td className="border-b p-4">
+              <td className="border-b p-4 flex gap-2">
                 <Link
-                  to={`/dashboard/products/${product.id}`}
-                  className="text-blue-500 hover:underline"
+                  to={`/dashboard/products/${product.id}/add-attribute`}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none"
                 >
-                  View
+                  Add Attribute
+                </Link>
+                <Link
+                  to={`/dashboard/products/${product.id}/add-variant`}
+                  className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none"
+                >
+                  Add Variant
                 </Link>
               </td>
             </tr>

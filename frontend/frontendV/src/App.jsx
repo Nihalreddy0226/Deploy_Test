@@ -12,6 +12,10 @@ import AddProduct from "./pages/Vendor/AddProduct";
 // import Settings from "./pages/Settings";
 import PrivateRoute from "./components/PrivateRoute";
 import ImageUploadSection from "./components/ImageUploadSection";
+import AttributesPage from "./pages/Vendor/AttributesPage";
+import AddAttribute from "./pages/Vendor/AddAttribute";
+import AddVariants from "./pages/Vendor/AddVariants";
+
 
 const App = () => (
   <AuthProvider>
@@ -40,6 +44,10 @@ const App = () => (
           <Route path="products" element={<Products />} />
           <Route path="add-product" element={<AddProduct />} />
           <Route path="/dashboard/upload-images/:productId" element={<ImageUploadSection />} />
+          <Route path="/dashboard/attributes" element={<AttributesPage />} />
+          <Route path="/dashboard/products/:productId/add-attribute" element={<AddAttribute />} />
+          <Route path="/dashboard/products/:productId/add-variant" element={<AddVariants />} />
+
           {/* <Route path="orders" element={<Orders />} />
           <Route path="settings" element={<Settings />} /> */}
         </Route>

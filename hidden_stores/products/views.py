@@ -303,6 +303,17 @@ class ProductVariantImageListCreateView(APIView):
 
 
 
+class ProductVariantListView(APIView):
+    """
+    Handles listing and creating product variants.
+    """
+    def get(self, request, *args, **kwargs):
+        product_id = kwargs.get('product_id')
+        print(f"Fetching variants for product_id: {product_id}")
+        variants = ProductVariant.objects.filter(product_id=product_id)  # Correct field
+        print(f"Found variants: {variants}")
+        serializer = ProductVariantSerializer(variants, many=True)
+        return Response(serializer.data)
 
 
 
