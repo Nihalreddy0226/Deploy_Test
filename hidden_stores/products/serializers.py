@@ -232,34 +232,46 @@ class ProductVariantSerializer(serializers.ModelSerializer):
         product = data['product']
         attributes = data['attributes']
 
-        # Step 1: Ensure all attributes belong to the same product
+        print(f"Validating attributes for product {product.id}")
+        print(f"Attributes provided: {[attr.id for attr in attributes]}")
+
+        # Ensure all attributes belong to the same product
         for attribute_value in attributes:
             if attribute_value.attribute.product != product:
                 raise serializers.ValidationError(
                     f"Attribute value '{attribute_value.value}' does not belong to the specified product."
                 )
 
-        # Step 2: Ensure attributes represent unique product attributes
+        # Ensure attributes represent unique product attributes
         unique_attributes = set()
         for attribute_value in attributes:
             if attribute_value.attribute.id in unique_attributes:
                 raise serializers.ValidationError(
-                    f"Duplicate attribute detected: '{attribute_value.attribute.name}'."
+                    f"Duplicate attribute detected: '{attribute_value.attribute.name}' for the same product."
                 )
             unique_attributes.add(attribute_value.attribute.id)
 
+        print("Validation passed!")
         return data
 
     def create(self, validated_data):
         attributes = validated_data.pop('attributes')
         product = validated_data['product']
 
-        # Check if an exact variant with these attributes exists
-        existing_variants = ProductVariant.objects.filter(product=product)
+        # Use a frozenset for exact match comparison
+        attribute_ids_set = frozenset(attr.id for attr in attributes)
+
+        # Query for variants with exact matching attributes
+        existing_variants = (
+            ProductVariant.objects.filter(product=product)
+            .annotate(attribute_count=Count('attributes'))
+            .prefetch_related('attributes')
+        )
+
         for variant in existing_variants:
             # Check if the attributes match exactly
-            variant_attributes = set(variant.attributes.all())
-            if variant_attributes == set(attributes):
+            variant_attribute_ids_set = frozenset(attr.id for attr in variant.attributes.all())
+            if variant_attribute_ids_set == attribute_ids_set:
                 # If an exact match is found, update the stock
                 variant.stock += validated_data.get('stock', 0)
                 variant.save()
@@ -270,6 +282,18 @@ class ProductVariantSerializer(serializers.ModelSerializer):
         variant.attributes.set(attributes)
         return variant
 
+class ProductVariantlistSerializer(serializers.ModelSerializer):
+    attributes = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=ProductAttributeValue.objects.all(),
+        help_text="List of attribute values for this variant"
+    )
+    product_id = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all(), source='product')
+
+    class Meta:
+        model = ProductVariant
+        fields = ['id', 'product_id', 'sku', 'stock', 'price', 'attributes']
+        read_only_fields = ['id']
 
 class ProductVariantImageSerializer(serializers.ModelSerializer):
     variant_id = serializers.PrimaryKeyRelatedField(queryset=ProductVariant.objects.all(), source='variant')
