@@ -41,13 +41,13 @@ class ProductVariantImageSerializer(serializers.ModelSerializer):
 
 class ProductVariantSerializer(serializers.ModelSerializer):
     attributes = ProductAttributeValueSerializer(many=True, read_only=True)
-    images = ProductImageSerializer(many=True, read_only=True)
+    
 
     class Meta:
         model = ProductVariant
-        fields = ['id', 'product', 'sku', 'price', 'stock', 'attributes', 'images']
+        fields = ['id', 'product', 'sku', 'price', 'stock', 'attributes', ]
 
-        read_only_fields = ['id', 'images']
+        read_only_fields = ['id']
 
 
 class ProductImage2Serializer(serializers.ModelSerializer):
@@ -74,32 +74,7 @@ class ProductImage2Serializer(serializers.ModelSerializer):
         return ProductImage.objects.bulk_create(product_images)
     
 
-class ProductSerializer(serializers.ModelSerializer):
-    images = ProductImage2Serializer(many=True, write_only=True, required=False)
-    category_id = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), source='category')
-    subcategory_id = serializers.PrimaryKeyRelatedField(queryset=SubCategory.objects.all(), source='subcategory')
-    variants = ProductVariantSerializer(many=True, read_only=True)
 
-    class Meta:
-        model = Product
-        fields = [
-            'id', 'category_id', 'subcategory_id',
-            'name', 'description', 'base_price', 'tags', 'is_active',
-            'created_at', 'updated_at', 'images', 'variants'
-        ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'variants']
-
-    def create(self, validated_data):
-        images_data = validated_data.pop('images', [])
-        product = Product.objects.create(**validated_data)
-
-        # Handle image uploads
-        for image_data in images_data:
-            image_files = image_data.pop('images', [])
-            for image_file in image_files:
-                ProductImage.objects.create(product=product, image=image_file, **image_data)
-
-        return product
 
 class ProductSerializer(serializers.ModelSerializer):
     images = ProductImageSerializer(many=True, read_only=True)
