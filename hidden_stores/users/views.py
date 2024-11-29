@@ -179,3 +179,11 @@ class AdminVendorManagementView(APIView):
         except VendorProfile.DoesNotExist:
             return Response({"detail": "Vendor not found."}, status=status.HTTP_404_NOT_FOUND)
 
+
+
+from django.http import JsonResponse
+from django.middleware.csrf import get_token
+
+def csrf(request):
+    """Return a CSRF token."""
+    return JsonResponse({'csrftoken': get_token(request)})

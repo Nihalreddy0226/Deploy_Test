@@ -303,3 +303,18 @@ class ProductVariantImageSerializer(serializers.ModelSerializer):
         fields = ['id', 'variant_id', 'image', 'alt_text', 'created_at']
         read_only_fields = ['id', 'created_at']
 
+
+
+class ProductVariantlistSerializer(serializers.ModelSerializer):
+    attributes = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=ProductAttributeValue.objects.all(),
+        help_text="List of attribute values for this variant"
+    )
+    product_id = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all(), source='product')
+
+    class Meta:
+        model = ProductVariant
+        fields = ['id', 'product_id', 'sku', 'stock', 'price', 'attributes']
+        read_only_fields = ['id']
+

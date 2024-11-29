@@ -7,29 +7,27 @@ import {
   FaClipboardList,
   FaCogs,
   FaSignOutAlt,
+  FaTags, // Icon for attributes
 } from "react-icons/fa";
 import api from "../services/api"; // Adjust the path based on your project structure
 
 const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [storeName, setStoreName] = useState(""); // Store name state
+  const [storeName, setStoreName] = useState("");
 
   useEffect(() => {
-    // Fetch the store name from the API
     const fetchStoreName = async () => {
       try {
-        const { data } = await api.get("/api/vendor/profile/"); // Adjust endpoint if necessary
-        setStoreName(data.store_name || "Store"); // Fallback to "Store" if no name is available
+        const { data } = await api.get("/api/vendor/profile/");
+        setStoreName(data.store_name || "Store");
       } catch (error) {
         console.error("Failed to fetch store name:", error);
       }
     };
-
     fetchStoreName();
   }, []);
 
   const getAbbreviation = (name) => {
-    // Return the first two uppercase letters of the store name
     const words = name.split(" ");
     if (words.length > 1) {
       return (words[0][0] + words[1][0]).toUpperCase();
@@ -43,7 +41,6 @@ const Sidebar = () => {
         isCollapsed ? "w-20" : "w-64"
       } bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 flex flex-col justify-between transition-all duration-300`}
     >
-      {/* Sidebar Header */}
       <div className="p-4 flex items-center gap-3">
         <div
           className={`flex items-center ${
@@ -53,13 +50,12 @@ const Sidebar = () => {
           <div className="flex items-center">
             <div className="bg-purple-500 p-2 rounded-md">
               <span className="text-white font-bold text-lg">
-                {getAbbreviation(storeName)} {/* Dynamic abbreviation */}
+                {getAbbreviation(storeName)}
               </span>
             </div>
             {!isCollapsed && (
               <div className="ml-3">
-                <h2 className="text-lg font-bold">{storeName}</h2>{" "}
-                {/* Dynamic store name */}
+                <h2 className="text-lg font-bold">{storeName}</h2>
               </div>
             )}
           </div>
@@ -72,8 +68,8 @@ const Sidebar = () => {
         </button>
       </div>
 
-      {/* Sidebar Links */}
       <ul className="flex-1 space-y-2 px-2">
+        {/* Existing Links */}
         <li>
           <NavLink
             to="/dashboard/profile"
@@ -127,7 +123,7 @@ const Sidebar = () => {
         </li>
         <li>
           <NavLink
-            to="/dashboard/orders"
+            to="/dashboard/attributes"
             className={({ isActive }) =>
               `flex items-center ${
                 isCollapsed ? "justify-center" : "justify-start"
@@ -138,30 +134,12 @@ const Sidebar = () => {
               } rounded-lg transition-colors duration-200`
             }
           >
-            <FaClipboardList className="text-lg" />
-            {!isCollapsed && <span className="ml-4">Orders</span>}
-          </NavLink>
-        </li>
-        <li>
-          <NavLink
-            to="/dashboard/settings"
-            className={({ isActive }) =>
-              `flex items-center ${
-                isCollapsed ? "justify-center" : "justify-start"
-              } px-4 py-3 text-sm font-medium ${
-                isActive
-                  ? "bg-purple-500 text-white"
-                  : "hover:bg-gray-200 dark:hover:bg-gray-700"
-              } rounded-lg transition-colors duration-200`
-            }
-          >
-            <FaCogs className="text-lg" />
-            {!isCollapsed && <span className="ml-4">Settings</span>}
+            <FaTags className="text-lg" />
+            {!isCollapsed && <span className="ml-4">Attributes</span>}
           </NavLink>
         </li>
       </ul>
 
-      {/* Sidebar Footer */}
       <div className="p-4 space-y-4">
         <button
           onClick={() => alert("Logged out")}

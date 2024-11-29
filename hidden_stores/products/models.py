@@ -113,3 +113,44 @@ class ProductVariantImage(models.Model):
         super().save(update_fields=["image"])
 
 
+import os
+from PIL import Image
+
+def product_variant_image_upload_path(instance, filename):
+    """
+    Constructs the upload path for product variant images:
+    /<product_name>/<variant_sku>/<filename>.webp
+    """
+    vendor_name = instance.variant.product.vendor.user.username
+    product_name = instance.variant.product.name.replace(" ", "_")
+    variant_sku = instance.variant.sku
+    return os.path.join(vendor_name, product_name, variant_sku, f"{os.path.splitext(filename)[0]}.webp")
+
+class ProductVariantImage(models.Model):
+    variant = models.ForeignKey(
+        ProductVariant,
+        on_delete=models.CASCADE,
+        related_name='images'
+    )
+    image = models.ImageField(upload_to=product_variant_image_upload_path)
+    alt_text = models.CharField(max_length=255, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self.convert_image_to_webp()
+
+    def convert_image_to_webp(self):
+        """
+        Converts the uploaded image to `.webp` format.
+        """
+        image_path = self.image.path
+        webp_path = os.path.splitext(image_path)[0] + ".webp"
+        with Image.open(image_path) as img:
+            img = img.convert("RGB")
+            img.save(webp_path, "webp", quality=85)
+        # Update the image field to point to the webp file
+        self.image.name = os.path.splitext(self.image.name)[0] + ".webp"
+        super().save(update_fields=["image"])
+
+

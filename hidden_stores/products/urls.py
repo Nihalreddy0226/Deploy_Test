@@ -117,6 +117,9 @@ urlpatterns = [
     # Product Variant Image URLs
     path('variants/<int:variant_id>/images/', ProductVariantImageListCreateView.as_view(), name='variant-image-list-create'),
 
+# HEAD
     # product variant list
     path('variants/list/<int:product_id>/', ProductVariantListView.as_view(), name = 'variant-list')
+
+
 ]

@@ -306,6 +306,17 @@ class ProductVariantImageListCreateView(APIView):
 
 
 
+class ProductVariantListView(APIView):
+    """
+    Handles listing and creating product variants.
+    """
+    def get(self, request, *args, **kwargs):
+        product_id = kwargs.get('product_id')
+        print(f"Fetching variants for product_id: {product_id}")
+        variants = ProductVariant.objects.filter(product_id=product_id)  # Correct field
+        print(f"Found variants: {variants}")
+        serializer = ProductVariantSerializer(variants, many=True)
+        return Response(serializer.data)
 
 
 class ProductVariantListView(APIView):
@@ -319,3 +330,24 @@ class ProductVariantListView(APIView):
         print(f"Found variants: {variants}")
         serializer = ProductVariantSerializer(variants, many=True)
         return Response(serializer.data)
+
+
+class ProductVariantImageListCreateView(APIView):
+    """
+    Handles listing and creating images for a product variant.
+    """
+    def get(self, request, *args, **kwargs):
+        variant_id = kwargs.get('variant_id')
+        images = ProductVariantImage.objects.filter(variant_id=variant_id)
+        serializer = ProductVariantImageSerializer(images, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, *args, **kwargs):
+        variant_id = kwargs.get('variant_id')
+        data = request.data
+        data['variant'] = variant_id
+        serializer = ProductVariantImageSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
