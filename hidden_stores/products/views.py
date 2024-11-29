@@ -351,3 +351,15 @@ class ProductVariantImageListCreateView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, *args, **kwargs):
+        image_id = kwargs.get('image_id')  # Extract the image ID from the URL
+        image = get_object_or_404(ProductVariantImage, pk=image_id)
+        
+        # Delete the associated file from storage
+        if image.image:
+            image.image.delete(save=False)  # Deletes the file but not the DB record
+        
+        # Delete the database record
+        image.delete()
+        return Response({"message": "Image deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
