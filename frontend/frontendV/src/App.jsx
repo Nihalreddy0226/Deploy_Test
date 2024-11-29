@@ -1,5 +1,6 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import Login from "./pages/Auth/Login";
 import Register from "./pages/Auth/Register";
@@ -8,18 +9,21 @@ import DashboardLayout from "./pages/Vendor/Dashboard";
 import Profile from "./pages/Vendor/Profile";
 import Products from "./pages/Vendor/Products";
 import AddProduct from "./pages/Vendor/AddProduct";
-// import Orders from "./pages/Orders";
-// import Settings from "./pages/Settings";
 import PrivateRoute from "./components/PrivateRoute";
 import ImageUploadSection from "./components/ImageUploadSection";
 import AttributesPage from "./pages/Vendor/AttributesPage";
 import AddAttribute from "./pages/Vendor/AddAttribute";
 import AddVariants from "./pages/Vendor/AddVariants";
 
-
 const App = () => (
   <AuthProvider>
-    <Router>
+    {/* Enable React Router v7 Future Flags */}
+    <BrowserRouter
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true,
+      }}
+    >
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -47,12 +51,9 @@ const App = () => (
           <Route path="/dashboard/attributes" element={<AttributesPage />} />
           <Route path="/dashboard/products/:productId/add-attribute" element={<AddAttribute />} />
           <Route path="/dashboard/products/:productId/add-variant" element={<AddVariants />} />
-
-          {/* <Route path="orders" element={<Orders />} />
-          <Route path="settings" element={<Settings />} /> */}
         </Route>
       </Routes>
-    </Router>
+    </BrowserRouter>
   </AuthProvider>
 );
 

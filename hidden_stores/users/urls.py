@@ -14,6 +14,6 @@ urlpatterns = [
     path('admin/vendors/', AdminVendorManagementView.as_view(), name='admin-vendor-list'),
     path('admin/vendors/<str:email>/', AdminVendorManagementView.as_view(), name='admin-vendor-update'),
     path('set-csrf-token/', set_csrf_token, name='set_csrf_token'),
-    
+    path('csrf/', csrf),
     path('vendor/profile/', VendorProfileView.as_view(), name='vendor-profile-update'), #4
 ]
