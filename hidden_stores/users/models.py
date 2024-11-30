@@ -15,6 +15,8 @@ class CustomUser(AbstractUser):
 
 class CustomerProfile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, primary_key=True)
+    phone_number = models.CharField(max_length=15, default= "**********", null = True)
+    name = models.CharField(max_length=15, default= "**********", null = True)
 
 
 class VendorProfile(models.Model):

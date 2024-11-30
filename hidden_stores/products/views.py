@@ -363,3 +363,23 @@ class ProductVariantImageListCreateView(APIView):
         # Delete the database record
         image.delete()
         return Response({"message": "Image deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+from django.db.models import Q
+
+class ProductListByTagsView(APIView):
+    """
+    Handles listing products based on tags.
+    """
+    def get(self, request, *args, **kwargs):
+        tags = request.query_params.getlist('tags')  # Extract 'tags' as a list from query params
+        if not tags:
+            return Response({"error": "Please provide at least one tag."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Filter products based on tags
+        # Check if any of the provided tags exist in the product's tags
+        query = Q()
+        for tag in tags:
+            query |= Q(tags__icontains=tag)
+
+        products = Product.objects.filter(query, is_active=True).distinct()  # Only active products
+        serializer = ProductSerializer(products, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

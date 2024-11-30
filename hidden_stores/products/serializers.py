@@ -293,3 +293,4 @@ class ProductVariantlistSerializer(serializers.ModelSerializer):
         fields = ['id', 'product_id', 'sku', 'stock', 'price', 'attributes']
         read_only_fields = ['id']
 
+

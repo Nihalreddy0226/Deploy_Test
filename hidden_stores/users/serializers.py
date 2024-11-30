@@ -164,3 +164,42 @@ class AdminLoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
 
+
+class CustomerRegistrationSerializer(serializers.ModelSerializer):
+    """
+    Serializer for customer registration.
+    """
+    
+    phone_number = serializers.CharField(write_only=True, required=True)
+
+    class Meta:
+        model = CustomUser
+        fields = ['username', 'email', 'password','phone_number' ]
+        extra_kwargs = {'password': {'write_only': True}}
+
+    def create(self, validated_data):
+        """
+        Create a new customer user and associated customer profile.
+        """
+        user_data = {
+            'username': validated_data['username'],
+            'email': validated_data['email'],
+            'is_vendor': False,
+        }
+        user = CustomUser(**user_data)
+        user.set_password(validated_data['password'])
+        user.is_active = False  # User is inactive until OTP verification
+        otp = generate_otp()
+        user.otp = otp  # Generate OTP
+        user.save()
+
+        CustomerProfile.objects.create(
+            user=user,
+            phone_number = validated_data['phone_number']
+            
+        )
+
+        # Send OTP
+        send_otp(user.email, otp)
+        return user
+

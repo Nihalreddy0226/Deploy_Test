@@ -16,4 +16,5 @@ urlpatterns = [
     path('set-csrf-token/', set_csrf_token, name='set_csrf_token'),
     path('csrf/', csrf),
     path('vendor/profile/', VendorProfileView.as_view(), name='vendor-profile-update'), #4
+    path('register/customer/', RegisterCustomerView.as_view(), name = 'customer-registration-view'),
 ]

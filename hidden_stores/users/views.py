@@ -187,3 +187,14 @@ from django.middleware.csrf import get_token
 def csrf(request):
     """Return a CSRF token."""
     return JsonResponse({'csrftoken': get_token(request)})
+
+
+
+############################# Customer pannel ################################################################
+class RegisterCustomerView(generics.CreateAPIView):
+    queryset = CustomUser.objects.all()
+    serializer_class = CustomerRegistrationSerializer
+    permission_classes = []
+
+
+    

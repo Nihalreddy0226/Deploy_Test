@@ -119,7 +119,8 @@ urlpatterns = [
 
 # HEAD
     # product variant list
-    path('variants/list/<int:product_id>/', ProductVariantListView.as_view(), name = 'variant-list')
+    path('variants/list/<int:product_id>/', ProductVariantListView.as_view(), name = 'variant-list'),
+    path('products/by-tags/', ProductListByTagsView.as_view(), name='product-list-by-tags')
 
 
 ]
