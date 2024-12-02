@@ -197,4 +197,9 @@ class RegisterCustomerView(generics.CreateAPIView):
     permission_classes = []
 
 
+class CustomerTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomerTokenObtainPairSerializer
+
     
+
+

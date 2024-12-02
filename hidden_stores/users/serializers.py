@@ -203,3 +203,20 @@ class CustomerRegistrationSerializer(serializers.ModelSerializer):
         send_otp(user.email, otp)
         return user
 
+
+class CustomerTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """
+    Custom token obtain pair serializer for customers.
+    """
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        # Add custom claims
+        token['is_customer'] = not user.is_vendor
+        return token
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        data.update({'is_customer': not self.user.is_vendor})
+        return data
+
