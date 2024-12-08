@@ -264,3 +264,61 @@ class ProductVarientImageView(APIView):
             return Response({"message": "Image deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
         except ProductVarientImage.DoesNotExist:
             raise NotFound({"error": "Image not found"})
+
+class ProductSearchView(APIView):
+    def get(self, request):
+        # Extract the query parameter
+        tags = request.query_params.get('tags', None)
+
+        if not tags:
+            return Response({"error": "Tags parameter is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Split the tags by comma and perform a case-insensitive search
+        tags_list = [tag.strip() for tag in tags.split(',')]
+        products = Product.objects.filter(
+            Q(tags__icontains=tags_list[0]) |
+            Q(tags__icontains=tags_list[1])  # Add dynamic Q objects for more tags if needed
+        ).distinct()
+
+        serializer = ProductSerializer(products, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+#Customer products based on category
+
+class ProductsByCategoryView(APIView):
+    def get(self, request, category_id):
+        try:
+            # Get the category
+            category = Category.objects.get(id=category_id)
+            
+            # Fetch all products in this category
+            products = Product.objects.filter(category=category)
+            
+            # Serialize the products
+            serializer = ProductSerializer(products, many=True)
+            
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Category.DoesNotExist:
+            return Response(
+                {"error": "Category not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+class ProductsBySubCategoryView(APIView):
+    def get(self, request, subcategory_id):
+        try:
+            # Get the subcategory
+            subcategory = SubCategory.objects.get(id=subcategory_id)
+            
+            # Fetch all products in this subcategory
+            products = Product.objects.filter(subcategory=subcategory)
+            
+            # Serialize the products
+            serializer = ProductSerializer(products, many=True)
+            
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except SubCategory.DoesNotExist:
+            return Response(
+                {"error": "SubCategory not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )

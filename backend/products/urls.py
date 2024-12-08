@@ -36,9 +36,13 @@ urlpatterns = [
     # product variants images
     path('variants/<int:variant_id>/images/', ProductVarientImageView.as_view(), name='variant-images-list-create'),
     path('variant-images/<int:image_id>/', ProductVarientImageView.as_view(), name='variant-image-detail'),
+    # products based on category and subcategory
+    path('products/category/<int:category_id>/', ProductsByCategoryView.as_view(), name='products-by-category'),
+    path('products/subcategory/<int:subcategory_id>/', ProductsBySubCategoryView.as_view(), name='products-by-subcategory'),
 
 
 ]
 #search based
 #public urls
 #search product
+#new done
