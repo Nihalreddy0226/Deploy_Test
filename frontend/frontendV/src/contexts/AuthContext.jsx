@@ -7,19 +7,26 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Decode JWT to extract user information
+  const decodeJWT = (token) => {
+    try {
+      return JSON.parse(atob(token.split(".")[1])); // Decode JWT payload
+    } catch (error) {
+      console.error("Invalid token:", error);
+      return null;
+    }
+  };
+
   // Check if user is authenticated when the component mounts
   useEffect(() => {
     const checkAuth = async () => {
       const accessToken = localStorage.getItem("accessToken");
       if (accessToken) {
-        try {
-          // Decode token or fetch minimal user data if necessary
-          const decodedUser = JSON.parse(atob(accessToken.split(".")[1])); // Decode JWT payload
-          setUser(decodedUser); // Set user details from token
-        //   console.log("User authenticated from token:", decodedUser);
-        } catch (error) {
-          console.error("Failed to parse token:", error);
-          logout(); // Logout if token is invalid
+        const decodedUser = decodeJWT(accessToken);
+        if (decodedUser && Date.now() / 1000 < decodedUser.exp) {
+          setUser(decodedUser); // Set user if token is valid and not expired
+        } else {
+          logout(); // Logout if token is expired or invalid
         }
       }
       setLoading(false); // Stop loading
@@ -34,13 +41,17 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem("accessToken", data.access); // Save access token
       localStorage.setItem("refreshToken", data.refresh); // Save refresh token
 
-      // Decode token to get user data
-      const decodedUser = JSON.parse(atob(data.access.split(".")[1])); // Decode JWT payload
+      const decodedUser = decodeJWT(data.access);
+      if (!decodedUser) {
+        throw new Error("Failed to decode user from token.");
+      }
+
       setUser(decodedUser); // Set user state
-    //   console.log("Login successful. User data:", decodedUser);
     } catch (error) {
       console.error("Login failed:", error.response?.data || error.message);
-      throw error; // Rethrow error to handle it in the login form
+      throw new Error(
+        error.response?.data?.detail || "Unable to login. Please try again."
+      );
     }
   };
 

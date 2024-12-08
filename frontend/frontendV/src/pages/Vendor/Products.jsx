@@ -88,7 +88,7 @@ const Products = () => {
               <td className="border-b p-4">
                 {product.images && product.images.length > 0 ? (
                   <img
-                    src={product.images[0].image} // Assuming the `images` field contains URLs
+                    src={product.images[0].image}
                     alt={product.images[0].alt_text || product.name}
                     className="h-16 w-16 object-cover rounded-md"
                   />
@@ -96,7 +96,14 @@ const Products = () => {
                   <span>No Image</span>
                 )}
               </td>
-              <td className="border-b p-4">{product.name}</td>
+              <td className="border-b p-4">
+                <Link
+                  to={`/dashboard/products/${product.id}`}
+                  className="text-blue-500 hover:underline"
+                >
+                  {product.name}
+                </Link>
+              </td>
               <td className="border-b p-4">
                 {categories[product.category_id] || "N/A"}
               </td>

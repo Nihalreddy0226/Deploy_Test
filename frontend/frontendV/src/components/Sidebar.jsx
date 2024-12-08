@@ -4,12 +4,11 @@ import {
   FaUser,
   FaBox,
   FaPlusSquare,
-  FaClipboardList,
-  FaCogs,
+  FaTags,
   FaSignOutAlt,
-  FaTags, // Icon for attributes
+  FaShapes, // Icon for Add Variant
 } from "react-icons/fa";
-import api from "../services/api"; // Adjust the path based on your project structure
+import api from "../services/api";
 
 const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -37,10 +36,11 @@ const Sidebar = () => {
 
   return (
     <div
-      className={`h-screen ${
+      className={`fixed top-0 left-0 h-screen ${
         isCollapsed ? "w-20" : "w-64"
-      } bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 flex flex-col justify-between transition-all duration-300`}
+      } bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 flex flex-col justify-between transition-all duration-300 z-50`}
     >
+      {/* Header */}
       <div className="p-4 flex items-center gap-3">
         <div
           className={`flex items-center ${
@@ -68,8 +68,8 @@ const Sidebar = () => {
         </button>
       </div>
 
+      {/* Links */}
       <ul className="flex-1 space-y-2 px-2">
-        {/* Existing Links */}
         <li>
           <NavLink
             to="/dashboard/profile"
@@ -138,8 +138,44 @@ const Sidebar = () => {
             {!isCollapsed && <span className="ml-4">Attributes</span>}
           </NavLink>
         </li>
+        <li>
+          <NavLink
+            to="/dashboard/products/:productId/add-variant"
+            className={({ isActive }) =>
+              `flex items-center ${
+                isCollapsed ? "justify-center" : "justify-start"
+              } px-4 py-3 text-sm font-medium ${
+                isActive
+                  ? "bg-purple-500 text-white"
+                  : "hover:bg-gray-200 dark:hover:bg-gray-700"
+              } rounded-lg transition-colors duration-200`
+            }
+          >
+            <FaShapes className="text-lg" />
+            {!isCollapsed && <span className="ml-4">Add Variant</span>}
+          </NavLink>
+        </li>
+        <li>
+          <NavLink
+            to="/dashboard/variants/add-images"
+            className={({ isActive }) =>
+              `flex items-center ${
+                isCollapsed ? "justify-center" : "justify-start"
+              } px-4 py-3 text-sm font-medium ${
+                isActive
+                  ? "bg-purple-500 text-white"
+                  : "hover:bg-gray-200 dark:hover:bg-gray-700"
+              } rounded-lg transition-colors duration-200`
+            }
+          >
+            <FaShapes className="text-lg" />
+            {!isCollapsed && <span className="ml-4">Add Variant Images</span>}
+          </NavLink>
+        </li>
+
       </ul>
 
+      {/* Footer */}
       <div className="p-4 space-y-4">
         <button
           onClick={() => alert("Logged out")}

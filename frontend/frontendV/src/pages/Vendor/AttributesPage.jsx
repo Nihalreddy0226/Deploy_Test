@@ -3,110 +3,172 @@ import { toast } from "react-toastify";
 import api from "../../services/api";
 
 const AttributesPage = () => {
-  const [products, setProducts] = useState([]);
   const [attributes, setAttributes] = useState([]);
-  const [newAttribute, setNewAttribute] = useState({
-    name: "",
-    product_id: "",
-  });
-  const [loading, setLoading] = useState(false);
+  const [newAttribute, setNewAttribute] = useState({ name: "", subcategoryId: "" });
+  const [newAttributeValue, setNewAttributeValue] = useState({ attributeId: "", value: "" });
+  const [subcategories, setSubcategories] = useState([]);
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const { data } = await api.get("/product/products/");
-        setProducts(data);
-      } catch (error) {
-        console.error("Failed to fetch products:", error);
-        toast.error("Failed to load products.");
-      }
-    };
-    const fetchAttributes = async () => {
-      try {
-        const { data } = await api.get("/product/products/attributes/");
-        setAttributes(data);
-      } catch (error) {
-        console.error("Failed to fetch attributes:", error);
-        toast.error("Failed to load attributes.");
-      }
-    };
-
-    fetchProducts();
     fetchAttributes();
+    fetchSubcategories();
   }, []);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setNewAttribute({ ...newAttribute, [name]: value });
+  const fetchAttributes = async () => {
+    try {
+      const response = await api.get("/product/attributes/");
+      const attributesWithValues = await Promise.all(
+        response.data.map(async (attribute) => {
+          const valuesResponse = await api.get(`/product/attributevalueByattribute/${attribute.id}/`);
+          return { ...attribute, values: valuesResponse.data };
+        })
+      );
+      setAttributes(attributesWithValues);
+    } catch (error) {
+      toast.error("Failed to fetch attributes.");
+    }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-
+  const fetchSubcategories = async () => {
     try {
-      await api.post("/product/products/attributes/", newAttribute);
-      toast.success("Attribute added successfully!");
-      setAttributes([...attributes, newAttribute]);
-      setNewAttribute({ name: "", product_id: "" });
+      const response = await api.get("/product/subcategories/");
+      setSubcategories(response.data);
     } catch (error) {
-      console.error("Failed to add attribute:", error);
-      toast.error("Failed to add attribute.");
-    } finally {
-      setLoading(false);
+      toast.error("Failed to fetch subcategories.");
+    }
+  };
+
+  const handleCreateAttribute = async () => {
+    if (!newAttribute.name || !newAttribute.subcategoryId) {
+      toast.error("Attribute name and subcategory are required.");
+      return;
+    }
+    try {
+      const payload = {
+        name: newAttribute.name,
+        SubCategory: newAttribute.subcategoryId,
+      };
+      const response = await api.post("/product/attributes/", payload);
+      setAttributes([...attributes, { ...response.data, values: [] }]); // Add new attribute with empty values
+      setNewAttribute({ name: "", subcategoryId: "" });
+      toast.success("Attribute created successfully!");
+    } catch (error) {
+      console.error(error.response.data);
+      toast.error("Failed to create attribute.");
+    }
+  };
+
+  const handleCreateAttributeValue = async () => {
+    if (!newAttributeValue.attributeId || !newAttributeValue.value) {
+      toast.error("Attribute and value are required.");
+      return;
+    }
+    try {
+      const payload = {
+        value: newAttributeValue.value,
+        attribute: newAttributeValue.attributeId,
+      };
+      const response = await api.post("/product/attribute-values/", payload);
+
+      const updatedAttributes = attributes.map((attr) =>
+        attr.id === newAttributeValue.attributeId
+          ? {
+              ...attr,
+              values: [...(attr.values || []), response.data],
+            }
+          : attr
+      );
+
+      setAttributes(updatedAttributes);
+      setNewAttributeValue({ attributeId: "", value: "" });
+      toast.success("Attribute value created successfully!");
+    } catch (error) {
+      console.error(error.response.data);
+      toast.error("Failed to create attribute value.");
     }
   };
 
   return (
-    <div className="bg-white shadow-lg rounded-lg p-6">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Manage Attributes</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Attribute Name</label>
+    <div className="p-6 bg-gray-100 h-full">
+      <h1 className="text-2xl font-bold mb-6 text-gray-700">Attributes Management</h1>
+
+      {/* Create New Attribute */}
+      <div className="bg-white p-4 rounded shadow-md mb-6">
+        <h2 className="text-xl font-semibold mb-4 text-gray-600">Create Attribute</h2>
+        <div className="flex gap-4 mb-4">
           <input
             type="text"
-            name="name"
+            className="w-full border border-gray-300 rounded p-2"
+            placeholder="Attribute Name"
             value={newAttribute.name}
-            onChange={handleChange}
-            required
-            className="mt-1 px-4 py-2 w-full border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:outline-none"
+            onChange={(e) => setNewAttribute({ ...newAttribute, name: e.target.value })}
           />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Link to Product</label>
           <select
-            name="product_id"
-            value={newAttribute.product_id}
-            onChange={handleChange}
-            required
-            className="mt-1 px-4 py-2 w-full border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:outline-none"
+            className="w-full border border-gray-300 rounded p-2"
+            value={newAttribute.subcategoryId}
+            onChange={(e) => setNewAttribute({ ...newAttribute, subcategoryId: e.target.value })}
           >
-            <option value="">Select a product</option>
-            {products.map((product) => (
-              <option key={product.id} value={product.id}>
-                {product.name}
+            <option value="">Select Subcategory</option>
+            {subcategories.map((subcategory) => (
+              <option key={subcategory.id} value={subcategory.id}>
+                {subcategory.name}
               </option>
             ))}
           </select>
         </div>
         <button
-          type="submit"
-          disabled={loading}
-          className={`w-full py-2 rounded-md text-white ${
-            loading ? "bg-gray-400" : "bg-purple-600 hover:bg-purple-700"
-          } focus:ring-2 focus:ring-purple-500 focus:outline-none`}
+          className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600"
+          onClick={handleCreateAttribute}
         >
-          {loading ? "Adding..." : "Add Attribute"}
+          Create Attribute
         </button>
-      </form>
-      <h3 className="text-lg font-bold text-gray-800 mt-6">Existing Attributes</h3>
-      <ul className="mt-4 space-y-2">
-        {attributes.map((attr) => (
-          <li key={attr.id} className="p-4 bg-gray-100 rounded-md">
-            {attr.name} (Product: {products.find((p) => p.id === attr.product_id)?.name || "Unknown"})
-          </li>
+      </div>
+
+      {/* Create New Attribute Value */}
+      <div className="bg-white p-4 rounded shadow-md mb-6">
+        <h2 className="text-xl font-semibold mb-4 text-gray-600">Create Attribute Value</h2>
+        <div className="flex gap-4 mb-4">
+          <select
+            className="w-full border border-gray-300 rounded p-2"
+            value={newAttributeValue.attributeId}
+            onChange={(e) => setNewAttributeValue({ ...newAttributeValue, attributeId: e.target.value })}
+          >
+            <option value="">Select Attribute</option>
+            {attributes.map((attribute) => (
+              <option key={attribute.id} value={attribute.id}>
+                {attribute.name}
+              </option>
+            ))}
+          </select>
+          <input
+            type="text"
+            className="w-full border border-gray-300 rounded p-2"
+            placeholder="Attribute Value"
+            value={newAttributeValue.value}
+            onChange={(e) => setNewAttributeValue({ ...newAttributeValue, value: e.target.value })}
+          />
+        </div>
+        <button
+          className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600"
+          onClick={handleCreateAttributeValue}
+        >
+          Create Attribute Value
+        </button>
+      </div>
+
+      {/* List Attributes and Values */}
+      <div className="bg-white p-4 rounded shadow-md">
+        <h2 className="text-xl font-semibold mb-4 text-gray-600">Attributes List</h2>
+        {attributes.map((attribute) => (
+          <div key={attribute.id} className="mb-4">
+            <h3 className="text-lg font-bold text-gray-700">{attribute.name}</h3>
+            <ul className="list-disc pl-5 text-gray-600">
+              {attribute.values?.map((value) => (
+                <li key={value.id}>{value.value}</li>
+              ))}
+            </ul>
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 };

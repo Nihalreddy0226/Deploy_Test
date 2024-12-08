@@ -1,6 +1,5 @@
 import React from "react";
-import { BrowserRouter } from "react-router-dom";
-import { Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"; // Import Navigate
 import { AuthProvider } from "./contexts/AuthContext";
 import Login from "./pages/Auth/Login";
 import Register from "./pages/Auth/Register";
@@ -14,19 +13,22 @@ import ImageUploadSection from "./components/ImageUploadSection";
 import AttributesPage from "./pages/Vendor/AttributesPage";
 import AddAttribute from "./pages/Vendor/AddAttribute";
 import AddVariants from "./pages/Vendor/AddVariants";
+import ProductDetails from "./pages/Vendor/ProductDetails";
+import AppLayout from "./AppLayout"; // Import AppLayout component
+import AddVariantImages from "./pages/Vendor/AddVariantImages";
 
 const App = () => (
   <AuthProvider>
-    {/* Enable React Router v7 Future Flags */}
-    <BrowserRouter
-      future={{
-        v7_startTransition: true,
-        v7_relativeSplatPath: true,
-      }}
-    >
+    <BrowserRouter>
       <Routes>
+        {/* Redirect root route to login */}
+        <Route path="/" element={<Navigate to="/login" />} />
+
+        {/* Public Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+
+        {/* Protected Routes */}
         <Route
           path="/details"
           element={
@@ -35,22 +37,28 @@ const App = () => (
             </PrivateRoute>
           }
         />
-        {/* Dashboard Layout with Nested Routes */}
+
+        {/* Dashboard Routes */}
         <Route
           path="/dashboard"
           element={
             <PrivateRoute>
-              <DashboardLayout />
+              <AppLayout>
+                <DashboardLayout />
+              </AppLayout>
             </PrivateRoute>
           }
         >
           <Route path="profile" element={<Profile />} />
           <Route path="products" element={<Products />} />
           <Route path="add-product" element={<AddProduct />} />
-          <Route path="/dashboard/upload-images/:productId" element={<ImageUploadSection />} />
-          <Route path="/dashboard/attributes" element={<AttributesPage />} />
-          <Route path="/dashboard/products/:productId/add-attribute" element={<AddAttribute />} />
-          <Route path="/dashboard/products/:productId/add-variant" element={<AddVariants />} />
+          <Route path="upload-images/:productId" element={<ImageUploadSection />} />
+          <Route path="attributes" element={<AttributesPage />} />
+          <Route path="products/:productId/add-attribute" element={<AddAttribute />} />
+          <Route path="products/:productId/add-variant" element={<AddVariants />} />
+          <Route path="products/:productId" element={<ProductDetails />} />
+          <Route path="variants/add-images" element={<AddVariantImages />} />
+
         </Route>
       </Routes>
     </BrowserRouter>

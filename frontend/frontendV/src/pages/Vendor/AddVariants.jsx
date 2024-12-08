@@ -1,286 +1,194 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import api from "../../services/api";
 
-const AddVariants = () => {
-  const { productId } = useParams();
-  const [variants, setVariants] = useState([]);
-  const [attributes, setAttributes] = useState([]);
-  const [selectedAttributes, setSelectedAttributes] = useState({});
-  const [sku, setSku] = useState("");
-  const [stock, setStock] = useState(0);
-  const [price, setPrice] = useState("");
-  const [loading, setLoading] = useState(false);
+const AddVariantPage = () => {
+  const [products, setProducts] = useState([]);
+  const [attributesWithValues, setAttributesWithValues] = useState([]);
+  const [variant, setVariant] = useState({
+    product: "",
+    attributes: [], // Store only IDs of selected attribute values
+    stock: "",
+    discounted_price_v: "",
+    original_price_v: "",
+  });
 
-  // Fetch product attributes and existing variants
   useEffect(() => {
-    const fetchAttributes = async () => {
-      try {
-        const { data } = await api.get(`/product/products/${productId}/attributes2/`);
-        const attributesWithValues = await Promise.all(
-          data.map(async (attribute) => {
-            try {
-              const valuesResponse = await api.get(
-                `/product/attributes/${attribute.id}/values/`
-              );
-              return { ...attribute, values: valuesResponse.data || [] };
-            } catch {
-              return { ...attribute, values: [] };
-            }
-          })
-        );
-        setAttributes(attributesWithValues);
-      } catch (error) {
-        console.error("Failed to fetch attributes:", error);
-        toast.error("Failed to load attributes.");
-      }
-    };
+    fetchProducts();
+  }, []);
 
-    const fetchVariants = async () => {
-      try {
-        const { data } = await api.get(`/product/variants/list/${productId}/`);
-        const variantsWithImages = await Promise.all(
-          data.map(async (variant) => {
-            const imageResponse = await api.get(`/product/variants/${variant.id}/images/`);
-            return { ...variant, images: imageResponse.data || [] };
-          })
-        );
-        setVariants(variantsWithImages);
-      } catch (error) {
-        console.error("Failed to fetch variants:", error);
-        toast.error("Failed to load variants.");
-      }
-    };
+  const fetchProducts = async () => {
+    try {
+      const response = await api.get("/product/products/");
+      setProducts(response.data);
+    } catch (error) {
+      toast.error("Failed to fetch products.");
+    }
+  };
 
-    fetchAttributes();
-    fetchVariants();
-  }, [productId]);
+  const fetchAttributesWithValues = async (productId) => {
+    try {
+      const response = await api.get(`/product/products/${productId}/`);
+      setAttributesWithValues(response.data.required_attributes || []);
+    } catch (error) {
+      toast.error("Failed to fetch attributes for the selected product.");
+    }
+  };
 
-  const handleAttributeChange = (attributeId, valueId) => {
-    setSelectedAttributes((prev) => ({ ...prev, [attributeId]: valueId }));
+  const handleProductChange = (e) => {
+    const productId = e.target.value;
+    setVariant({ ...variant, product: productId, attributes: [] });
+
+    if (productId) {
+      fetchAttributesWithValues(productId);
+    } else {
+      setAttributesWithValues([]);
+    }
+  };
+
+  const handleAttributeValueSelection = (valueId) => {
+    setVariant((prevState) => ({
+      ...prevState,
+      attributes: prevState.attributes.includes(valueId)
+        ? prevState.attributes.filter((id) => id !== valueId)
+        : [...prevState.attributes, valueId],
+    }));
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setVariant({ ...variant, [name]: value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+
+    // Ensure required fields are filled
+    if (!variant.product || variant.attributes.length === 0 || !variant.stock) {
+      toast.error("Please fill all required fields.");
+      return;
+    }
 
     try {
       const payload = {
-        product_id: productId,
-        sku,
-        stock,
-        price,
-        attributes: Object.values(selectedAttributes),
+        product: variant.product,
+        attributes: variant.attributes, // Send only IDs
+        stock: variant.stock,
+        discounted_price_v: variant.discounted_price_v,
+        original_price_v: variant.original_price_v,
       };
 
-      const { data } = await api.post(`/product/products/${productId}/variants/`, payload);
-      setVariants([...variants, { ...data, images: [] }]);
+      const response = await api.post("/product/product-variants/", payload);
       toast.success("Variant added successfully!");
-      setSku("");
-      setStock(0);
-      setPrice("");
-      setSelectedAttributes({});
-    } catch (error) {
-      console.error("Failed to add variant:", error);
-      toast.error("Failed to add variant.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeleteVariant = async (variantId) => {
-    if (!window.confirm("Are you sure you want to delete this variant?")) return;
-
-    try {
-      await api.delete(`/product/variants/${variantId}/`);
-      setVariants(variants.filter((variant) => variant.id !== variantId));
-      toast.success("Variant deleted successfully.");
-    } catch (error) {
-      console.error("Failed to delete variant:", error);
-      toast.error("Failed to delete variant.");
-    }
-  };
-
-  const handleImageUpload = async (variantId, files) => {
-    const formData = new FormData();
-    Array.from(files).forEach((file) => formData.append("images", file));
-
-    try {
-      const { data } = await api.post(`/product/variants/${variantId}/images/`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+      // Reset form
+      setVariant({
+        product: "",
+        attributes: [],
+        stock: "",
+        discounted_price_v: "",
+        original_price_v: "",
       });
-      setVariants((prev) =>
-        prev.map((variant) =>
-          variant.id === variantId ? { ...variant, images: data } : variant
-        )
-      );
-      toast.success("Images uploaded successfully!");
+      setAttributesWithValues([]);
     } catch (error) {
-      console.error("Failed to upload images:", error);
-      toast.error("Failed to upload images.");
+      console.error(error.response?.data);
+      toast.error("Failed to add variant.");
     }
-  };
-
-  const handleDeleteImage = async (variantId, imageId) => {
-    try {
-      await api.delete(`/product/variants/${variantId}/images/${imageId}/`);
-      setVariants((prev) =>
-        prev.map((variant) =>
-          variant.id === variantId
-            ? { ...variant, images: variant.images.filter((image) => image.id !== imageId) }
-            : variant
-        )
-      );
-      toast.success("Image deleted successfully!");
-    } catch (error) {
-      console.error("Failed to delete image:", error);
-      toast.error("Failed to delete image.");
-    }
-  };
-
-  const handleUploadClick = (variantId) => {
-    const fileInput = document.createElement("input");
-    fileInput.type = "file";
-    fileInput.accept = "image/*";
-    fileInput.multiple = true; // Allow multiple file selection
-    fileInput.onchange = (e) => {
-      const files = e.target.files;
-      if (files.length > 0) handleImageUpload(variantId, files);
-    };
-    fileInput.click();
   };
 
   return (
-    <div className="bg-white shadow-lg rounded-lg p-6">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Add Variants</h2>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">SKU</label>
-          <input
-            type="text"
-            value={sku}
-            onChange={(e) => setSku(e.target.value)}
-            required
-            placeholder="e.g., SKU12345"
-            className="mt-1 px-4 py-2 w-full border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:outline-none"
-          />
+    <div className="p-6 bg-gray-100 h-full">
+      <h1 className="text-2xl font-bold mb-6 text-gray-700">Add Product Variant</h1>
+      <form className="bg-white p-4 rounded shadow-md" onSubmit={handleSubmit}>
+        {/* Product Selection */}
+        <div className="mb-4">
+          <label className="block text-gray-600 font-medium mb-2">Product *</label>
+          <select
+            name="product"
+            className="w-full border border-gray-300 rounded p-2"
+            value={variant.product}
+            onChange={handleProductChange}
+          >
+            <option value="">Select Product</option>
+            {products.map((product) => (
+              <option key={product.id} value={product.id}>
+                {product.name}
+              </option>
+            ))}
+          </select>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Stock</label>
+        {/* Attributes with Values */}
+        {attributesWithValues.length > 0 && (
+          <div className="mb-4">
+            <label className="block text-gray-600 font-medium mb-2">Attributes *</label>
+            {attributesWithValues.map((attribute) => (
+              <div key={attribute.id} className="mb-2">
+                <h3 className="font-medium text-gray-700">{attribute.name}</h3>
+                <div className="flex flex-wrap gap-4">
+                  {attribute.values && attribute.values.map((value) => (
+                    <label key={value.id} className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name={`attribute-${attribute.id}`}
+                        value={value.id}
+                        checked={variant.attributes.includes(value.id)}
+                        onChange={() => handleAttributeValueSelection(value.id)}
+                      />
+                      {value.value}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Stock */}
+        <div className="mb-4">
+          <label className="block text-gray-600 font-medium mb-2">Stock *</label>
           <input
             type="number"
-            value={stock}
-            onChange={(e) => setStock(Number(e.target.value))}
-            required
-            placeholder="e.g., 10"
-            className="mt-1 px-4 py-2 w-full border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:outline-none"
+            name="stock"
+            className="w-full border border-gray-300 rounded p-2"
+            value={variant.stock}
+            onChange={handleInputChange}
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Price</label>
+        {/* Discounted Price */}
+        <div className="mb-4">
+          <label className="block text-gray-600 font-medium mb-2">Discounted Price</label>
           <input
-            type="text"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            required
-            placeholder="e.g., 19.99"
-            className="mt-1 px-4 py-2 w-full border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:outline-none"
+            type="number"
+            name="discounted_price_v"
+            className="w-full border border-gray-300 rounded p-2"
+            value={variant.discounted_price_v}
+            onChange={handleInputChange}
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Attributes</label>
-          {attributes.length > 0 ? (
-            attributes.map((attribute) => (
-              <div key={attribute.id} className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">{attribute.name}</label>
-                <select
-                  value={selectedAttributes[attribute.id] || ""}
-                  onChange={(e) => handleAttributeChange(attribute.id, e.target.value)}
-                  className="mt-1 px-4 py-2 w-full border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:outline-none"
-                >
-                  <option value="">Select {attribute.name}</option>
-                  {attribute.values.map((value) => (
-                    <option key={value.id} value={value.id}>
-                      {value.value}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ))
-          ) : (
-            <p className="text-gray-600">No attributes found.</p>
-          )}
+        {/* Original Price */}
+        <div className="mb-4">
+          <label className="block text-gray-600 font-medium mb-2">Original Price</label>
+          <input
+            type="number"
+            name="original_price_v"
+            className="w-full border border-gray-300 rounded p-2"
+            value={variant.original_price_v}
+            onChange={handleInputChange}
+          />
         </div>
 
+        {/* Submit Button */}
         <button
           type="submit"
-          disabled={loading}
-          className={`w-full py-2 rounded-md text-white ${
-            loading ? "bg-gray-400" : "bg-purple-600 hover:bg-purple-700"
-          } focus:ring-2 focus:ring-purple-500 focus:outline-none`}
+          className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600"
         >
-          {loading ? "Adding..." : "Add Variant"}
+          Add Variant
         </button>
       </form>
-
-      <div className="mt-8">
-        <h3 className="text-lg font-bold text-gray-800 mb-4">Existing Variants</h3>
-        {variants.length > 0 ? (
-          <ul className="space-y-4">
-            {variants.map((variant) => (
-              <li key={variant.id} className="p-4 bg-gray-100 rounded-md">
-                <div className="flex flex-col space-y-2">
-                  <p className="text-sm font-medium">SKU: {variant.sku}</p>
-                  <p className="text-sm text-gray-700">Price: ${variant.price}</p>
-                  <p className="text-sm text-gray-700">Stock: {variant.stock}</p>
-                  <div>
-                    <p className="text-sm text-gray-700">Images:</p>
-                    <div className="flex space-x-2 items-center">
-                      {variant.images &&
-                        variant.images.map((image) => (
-                          <div key={image.id} className="relative">
-                            <img
-                              src={image.image}
-                              alt="Variant"
-                              className="h-16 w-16 object-cover rounded-md"
-                            />
-                            <button
-                              onClick={() => handleDeleteImage(variant.id, image.id)}
-                              className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full px-1"
-                            >
-                              X
-                            </button>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => handleUploadClick(variant.id)}
-                    className="text-blue-500 hover:text-blue-700 focus:outline-none mt-2"
-                  >
-                    Upload Images
-                  </button>
-                  <button
-                    onClick={() => handleDeleteVariant(variant.id)}
-                    className="text-red-500 hover:text-red-700 focus:outline-none mt-2"
-                  >
-                    Delete Variant
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-gray-600">No variants found for this product.</p>
-        )}
-      </div>
     </div>
   );
 };
 
-export default AddVariants;
+export default AddVariantPage;
